@@ -176,10 +176,44 @@ namespace SimpleARPlacement.EditorTools
             GameObject planePrefab = CreatePlanePrefab(planeMaterial);
             GameObject chairPrefab = CreateChairPrefab(seatMaterial, legMaterial);
 
-            BuildScene(planePrefab, chairPrefab, planeMaterial, indicatorMaterial);
+            // Scene utama dibuat sebagai salinan persis template Mobile AR bawaan Unity,
+            // sehingga UI bawaan template (coaching prompt, object menu, tombol
+            // Create/Delete/Options/Debug Plane, slider, onboarding goal) ikut terbawa.
+            CreateSceneFromTemplate();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Menyalin scene template Mobile AR bawaan Unity (SampleScene.unity) menjadi
+        /// scene utama proyek, lalu mendaftarkannya di Build Settings.
+        /// </summary>
+        private static void CreateSceneFromTemplate()
+        {
+            if (!File.Exists(SampleScenePath))
+            {
+                throw new BuildFailedException(
+                    $"Template {SampleScenePath} tidak ditemukan. " +
+                    "Pastikan proyek dibuat dari template Mobile AR.");
+            }
+
+            UnityEngine.SceneManagement.Scene scene =
+                EditorSceneManager.OpenScene(SampleScenePath, OpenSceneMode.Single);
+
+            if (!EditorSceneManager.SaveScene(scene, ScenePath))
+            {
+                throw new BuildFailedException($"Gagal menyimpan scene ke {ScenePath}.");
+            }
+
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(ScenePath, true),
+                new EditorBuildSettingsScene(SampleScenePath, false)
+            };
+
+            Debug.Log($"[SimpleARPlacement] Scene utama disalin dari template: " +
+                      $"{SampleScenePath} -> {ScenePath} (UI template ikut terbawa).");
         }
 
         public static void ValidateSetup()
@@ -892,12 +926,14 @@ namespace SimpleARPlacement.EditorTools
             bottomLayout.childForceExpandHeight = false;
             bottomLayout.childAlignment = TextAnchor.MiddleCenter;
 
-            Button rotateLeft = CreateButton(bottomPanel, "Button Rotate Left", font, "\u25C0", 56f, 150f);
-            Button rotateRight = CreateButton(bottomPanel, "Button Rotate Right", font, "\u25B6", 56f, 150f);
-            Button scaleDown = CreateButton(bottomPanel, "Button Scale Down", font, "\u2212", 60f, 150f);
-            Button scaleUp = CreateButton(bottomPanel, "Button Scale Up", font, "+", 60f, 150f);
-            Button reset = CreateButton(bottomPanel, "Button Reset", font, "Reset", 34f, 200f);
-            Button planeToggle = CreateButton(bottomPanel, "Button Planes", font, "Grid", 34f, 200f);
+            // Label memakai teks ASCII saja: glyph panah (U+25C0/U+25B6) tidak ada
+            // pada font bawaan TMP (LiberationSans) sehingga tampil kotak kosong.
+            Button rotateLeft = CreateButton(bottomPanel, "Button Rotate Left", font, "Kiri", 30f, 110f);
+            Button rotateRight = CreateButton(bottomPanel, "Button Rotate Right", font, "Kanan", 30f, 110f);
+            Button scaleDown = CreateButton(bottomPanel, "Button Scale Down", font, "\u2212", 54f, 110f);
+            Button scaleUp = CreateButton(bottomPanel, "Button Scale Up", font, "+", 54f, 110f);
+            Button reset = CreateButton(bottomPanel, "Button Reset", font, "Reset", 30f, 150f);
+            Button planeToggle = CreateButton(bottomPanel, "Button Planes", font, "Grid", 30f, 150f);
 
             // EventSystem dengan modul input sesuai proyek (Input System).
             if (UnityEngine.Object.FindFirstObjectByType<EventSystem>() == null)
@@ -993,6 +1029,9 @@ namespace SimpleARPlacement.EditorTools
             layoutElement.preferredHeight = 140f;
             layoutElement.minWidth = width;
             layoutElement.minHeight = 120f;
+            // Agar baris tombol selalu muat di layar: lebar minimal kecil, sisanya
+            // dibagi rata sehingga tombol terakhir (Grid) tidak terpotong.
+            layoutElement.flexibleWidth = 1f;
 
             TextMeshProUGUI text = CreateText(rect, "Label", font, fontSize, Color.white,
                 TextAlignmentOptions.Center, label);

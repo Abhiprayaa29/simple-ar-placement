@@ -77,16 +77,51 @@ Perintah pemasangan:
 adb install -r "D:\Unity\RVA 1\Builds\SimpleARPlacement.apk"
 ```
 
+## 4.5 Iterasi: scene diganti menjadi salinan template Mobile AR
+
+Permintaan saat pengujian: **gunakan UI bawaan template Mobile AR** (dianggap sudah
+lengkap). Tindakan:
+
+| Perubahan | Detail |
+|---|---|
+| Scene utama | `Assets/Scenes/SimpleARPlacement.unity` dibuat ulang sebagai **salinan persis** `SampleScene.unity` (template) oleh tool (`CreateSceneFromTemplate`) |
+| UI | Coaching prompt (*Scan Surfaces*, *Tap to Place*, *Move/Rotate/Scale*), object menu, `Cancel`, tombol `⋯` (Options), `Delete`/`Remove Objects`, `Debug Plane Toggle`, slider, onboarding `GoalManager` |
+| Input UI | `XRUIInputModule` (milik XRI) menggantikan `InputSystemUIInputModule` buatan sendiri |
+| Objek | Prefab objek template (`MobileARTemplateAssets/Prefabs`) menggantikan kursi buatan sendiri |
+| Interaksi | Tap untuk menempatkan, drag 1 jari untuk memindah, cubit/putar 2 jari untuk skala & rotasi (gestur `TouchscreenGestureInputController`) |
+| Skrip sendiri | `ARPlacementManager`, `ARPlaneController`, `ARUIController` tetap ada di repo, **tidak dipakai scene final** (belum dihapus agar riwayat implementasi terjaga) |
+| Build ulang | `BuildApkBatch` ke-3: **Succeeded**, `error 0`, durasi 00:04:55 |
+
+Verifikasi di perangkat (Samsung Galaxy A54, Android 16):
+
+* APK terpasang ulang (`adb install -r`, `lastUpdateTime 2026-10-03 15:52:42`).
+* Aplikasi menjadi activity terdepan, proses berjalan, **tidak ada exception Unity** di logcat.
+* Screenshot `Screenshots/05_template_ui.png` menunjukkan coaching prompt
+  *Tap to Place*, object menu (cube/pyramid/torus/wedge), tombol `Cancel` dan `⋯`.
+* Screenshot sebelumnya: `01_status_device.png` (versi UI sendiri, status
+  `AR: SessionTracking | Plane: 0`), `02_layout_fix.png` (perbaikan label tombol
+  & baris tombol yang tadinya kepanjangan).
+
+Temuan perbaikan yang dilakukan pada versi UI sendiri sebelum beralih ke template:
+
+1. Glyph panah `◀▶` tidak tersedia di font bawaan TMP → tampil kotak; diganti label `Kiri`/`Kanan`.
+2. Baris tombol selebar ±1082 px melebihi lebar kanvas (±978 px) sehingga tombol
+   `Grid` terpotong → lebar minimum diperkecil + `flexibleWidth = 1`.
+3. Tombol tidak bereaksi di perangkat (belum selesai didiagnosis) → atas permintaan,
+   seluruh UI diganti dengan UI template yang memakai `XRUIInputModule`.
+
+---
+
 ## 5. Batasan & Pekerjaan Berikutnya
 
-1. **Belum diuji di perangkat fisik** — jalankan 5 skenario di
+1. **Pengujian terbatas** — jalankan 5 skenario di
    `Panduan_Pengujian.md`, isi tabel hasil, ambil ≥10 screenshot + video 1–2 menit
    sesuai `Checklist_Screenshot_dan_Video.md`.
 2. Belum ada bayangan pantulan objek ke permukaan nyata (AR shadow receiver).
-3. Belum ada mode multi-objek (satu objek aktif, sesuai ketentuan).
+3. UI template mengizinkan **multi-objek** (berbeda dengan ketentuan awal anti-duplikasi).
 4. Build iOS belum dikonfigurasi (ARKit terpasang, belum disiapkan build-nya).
 5. Untuk distribusi perlu keystore rilis (saat ini debug).
-6. Pemindahan objek dilakukan dengan mengetuk permukaan baru (drag jari belum ada).
+6. Teks UI template berbahasa Inggris; skrip buatan sendiri tidak aktif di scene final.
 
 ## 6. Cara Mengulang Semua dari Nol
 

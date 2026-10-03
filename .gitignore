@@ -39,3 +39,4 @@ sysinfo.txt
 
 # APK build utama tetap ikut (deliverable)
 !/[Bb]uilds/SimpleARPlacement.apk
+Logs/shadercompiler-*.log

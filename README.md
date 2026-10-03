@@ -88,41 +88,38 @@ Atau melalui command line (batchmode):
 ```
 Assets/
 ├── Scenes/
-│   └── SimpleARPlacement.unity          ← scene utama (dibuat tool)
+│   ├── SimpleARPlacement.unity            ← scene utama = SALINAN template Mobile AR
+│   │                                           (dibuat tool dari SampleScene.unity)
+│   └── SampleScene.unity                  ← scene template asli (tidak diubah, nonaktif di build)
+├── MobileARTemplateAssets/                ← aset bawaan template (UI, prompt, prefab, script)
+├── Samples/XR Interaction Toolkit/3.5.1/  ← rig AR + interactor bawaan template
 ├── SimpleARPlacement/
 │   ├── Scripts/
-│   │   ├── ARPlacementManager.cs        ← input tap, raycast, tempat/pindah/rotasi/skala/reset
-│   │   ├── ARPlaneController.cs         ← deteksi & visualisasi plane, izin kamera, status AR
-│   │   └── ARUIController.cs            ← teks status/instruksi, toast, tombol UI
+│   │   ├── ARPlacementManager.cs          ← versi awal: penempatan sendiri (tidak dipakai scene final)
+│   │   ├── ARPlaneController.cs           ← versi awal: status/izin (tidak dipakai scene final)
+│   │   └── ARUIController.cs              ← versi awal: UI sendiri (tidak dipakai scene final)
 │   ├── Editor/
-│   │   └── SimpleARPlacementTool.cs     ← tool pembuat scene/prefab + build APK
-│   ├── Prefabs/
-│   │   ├── SimpleARPlaneVisualizer.prefab  ← visualisasi permukaan (grid)
-│   │   └── SimpleChair.prefab              ← objek 3D kursi (dari primitive)
-│   ├── Materials/
-│   │   ├── SimpleARPlaneMaterial.mat       ← material grid transparan (URP Unlit)
-│   │   ├── SimpleARIndicator.mat           ← material indikator penempatan
-│   │   ├── SimpleChairSeat.mat             ← material kayu jok sandaran
-│   │   └── SimpleChairLeg.mat              ← material kayu kaki kursi
-│   └── Textures/
-│       └── PlaneGridTexture.asset          ← tekstur grid (dibuat prosedural)
+│   │   └── SimpleARPlacementTool.cs       ← tool: salin scene template, validasi, build APK
+│   ├── Prefabs/ , Materials/ , Textures/  ← aset versi awal (dipertahankan, tidak dipakai scene final)
+├── XR/ , XRI/ , Settings/                 ← konfigurasi XR/URP bawaan template
 Docs/SimpleARPlacement/
-│   ├── Panduan_Pengujian.md              ← tabel 5 skenario pengujian
-│   ├── Checklist_Screenshot_dan_Video.md ← checklist bukti visual
-│   └── Laporan_Akhir.md                  ← laporan hasil kerja
-README.md                                 ← dokumen ini
+│   ├── Panduan_Pengujian.md               ← tabel 5 skenario pengujian
+│   ├── Checklist_Screenshot_dan_Video.md  ← checklist bukti visual
+│   ├── Screenshots/                       ← screenshot bukti dari perangkat
+│   └── Laporan_Akhir.md                   ← laporan hasil kerja
+README.md                                  ← dokumen ini
 ```
 
-### Komponen pada scene `SimpleARPlacement`
+### Komponen pada scene `SimpleARPlacement` (milik template Mobile AR)
 
 | Objek | Komponen utama | Tugas |
 |---|---|---|
-| `AR Session` | `ARSession`, `ARInputManager` | Menjalankan sesi AR, mencocokkan frame rate |
-| `XR Origin (AR Rig)` | `XROrigin`, `ARCameraManager`, `ARCameraBackground`, `TrackedPoseDriver`, `ARPlaneManager`, `ARRaycastManager`, `ARAnchorManager`, `ARPlaneController`, `ARPlacementManager` | Kamera AR + manajer permukaan + logika penempatan |
-| `Placement Indicator` | Ring/pin primitif | Menunjukkan titik hasil raycast sebelum objek ditempatkan |
-| `SimpleAR Placement UI` | `Canvas`, `ARUIController` | Status, instruksi, toast, tombol |
-| `EventSystem` | `EventSystem`, `InputSystemUIInputModule` | Input UI sesuai Input System |
-| `Directional Light` | `Light` | Pencahayaan objek 3D |
+| `AR Session` | `ARSession`, `ARInputManager` | Menjalankan sesi AR |
+| `XR Origin (AR Rig)` | `XROrigin`, `ARCameraManager`, `ARCameraBackground`, `TrackedPoseDriver`, `ARPlaneManager`, `ARRaycastManager`, `ARFeatheredPlaneMeshVisualizer` | Kamera AR + deteksi/visualisasi permukaan |
+| `Object Spawner` | `ObjectSpawner`, `ARInteractorSpawnTrigger`, `XRRayInteractor`, `XRInteractionGroup` | Menempatkan objek yang dipilih pada permukaan |
+| `UI` | `Canvas`, `GraphicRaycaster`, `XRUIInputModule`, `EventSystem`, `ARTemplateMenuManager`, `GoalManager`, `ARDebugMenu` | Coaching prompt, object menu, tombol, onboarding |
+| `EventSystem` | `EventSystem` + `XRUIInputModule` | Input UI (module khusus XRI) |
+| `Directional Light` | `Light` | Pencahayaan objek |
 
 ---
 
@@ -200,24 +197,25 @@ adb install -r "Builds\SimpleARPlacement.apk"
 
 ---
 
-## 8. Kontrol Aplikasi (UI)
+## 8. Kontrol Aplikasi (UI bawaan template)
 
 | Elemen | Fungsi |
 |---|---|
-| Baris atas (biru) | Status AR: `AR: <state> | Izin | Plane: <jumlah>` |
-| Instruksi (putih) | Pesan langkah berikutnya untuk pengguna |
-| Pesan kuning (toast) | Umpan balik singkat: objek ditempatkan/dipindah, raycast gagal, dll. |
-| `◀` `▶` | Rotasi objek 30° per tekan |
-| `−` `+` | Perkecil / perbesar objek (faktor 1.2, batas 0.4×–3×) |
-| `Reset` | Hapus objek yang ditempatkan |
-| `Grid` | Tampilkan/sembunyikan visualisasi permukaan |
+| Coaching prompt (tengah layar) | Panduan langkah: *Scan Surfaces* → *Tap to Place* → *Move/Rotate/Scale Object* |
+| Object menu (baris bawah) | Pilih objek yang akan ditempatkan (cube, pyramid, torus, wedge, dll.) |
+| `Cancel` | Menutup object menu |
+| Tombol `⋯` (kanan atas) | Membuka menu opsi (object menu, debug, slider, hapus objek) |
+| `Options Modal` | Create/Delete, Remove Objects, Debug Plane Toggle, Debug Menu Toggle, Hints |
+| `Debug Plane Toggle` | Menampilkan/menyembunyikan visualisasi permukaan (plane) |
+| `Greeting Prompt` / `Hints` | Onboarding & petunjuk gestur |
 
-Perilaku penempatan:
+Interaksi objek (disediakan template):
 
-* **Tap pertama** pada permukaan → objek muncul tepat di hasil raycast (pivot di dasar objek).
-* **Tap berikutnya** pada permukaan lain → objek **dipindahkan** (tidak membuat objek ganda).
-* Objek diikat ke **ARAnchor** yang menempel pada plane, sehingga mengikuti perbaikan tracking.
-* Tap di atas UI atau area tanpa permukaan → tidak menempatkan objek dan menampilkan toast.
+* **Ketuk permukaan** → objek terpilih ditempatkan pada titik raycast.
+* **Seret (drag) satu jari** → memindahkan objek.
+* **Cubit/putar dua jari** → mengubah skala dan rotasi objek (gestur XRI
+  `TouchscreenGestureInputController`).
+* **Delete / Remove Objects** → menghapus objek (reset).
 
 ---
 
@@ -235,22 +233,26 @@ Checklist bukti visual (screenshot & video 1–2 menit):
 
 ## 10. Batasan Implementasi yang Diketahui
 
-1. **Belum diuji pada perangkat fisik** dalam sesi pengembangan ini (lihat
-   `Docs/SimpleARPlacement/Laporan_Akhir.md`). Kompilasi, pembuatan scene/prefab,
-   validasi konfigurasi, dan build APK dilakukan lewat Unity batchmode.
-2. Objek 3D berupa **kursi sederhana dari primitive Unity** (bukan model eksternal),
-   sesuai ketentuan agar proyek berjalan tanpa aset tambahan.
-3. **Belum ada bayangan pantulan (AR shadow receiver)** — objek memakai pencahayaan
-   directional biasa sehingga bayangan di permukaan nyata tidak dirender.
-   Dapat ditambahkan dengan *AR Shadow Receiver* bila diperlukan.
-4. **Tidak ada mode multi-objek**: hanya satu objek aktif (ketentuan anti-duplikasi).
-5. Build iOS belum dikonfigurasi (hanya Android yang disiapkan), meskipun ARKit terpasang.
-6. APK ditandatangani debug keystore — untuk distribusi perlu keystore rilis.
-7. Fitur **drag dengan jari** belum diimplementasikan; pemindahan dilakukan dengan
-   mengetuk titik permukaan baru (sesuai skenario nilai tambah yang dipilih).
-8. Jika perangkat tidak mendukung ARCore, APK dengan *requirement = Required* tidak
-   dapat dipasang; jika dipasang pada kondisi lain, aplikasi menampilkan
-   “Perangkat ini tidak mendukung ARCore”.
+1. **UI diganti dengan UI bawaan template Mobile AR** (permintaan saat pengembangan,
+   karena sudah lengkap): coaching prompt, object menu, options, debug plane toggle,
+   onboarding goal. Skrip buatan sendiri (`ARPlacementManager`, `ARPlaneController`,
+   `ARUIController`) tetap ada di repo tetapi **tidak dipakai oleh scene final**.
+2. Objek 3D memakai **objek bawaan template** (cube, pyramid, torus, wedge, arch, dll.
+   dari `MobileARTemplateAssets/Prefabs`), bukan kursi buatan sendiri.
+3. **Multi-objek diizinkan** (berbeda dengan ketentuan awal anti-duplikasi): template
+   menyediakan Create/Delete/Remove Objects.
+4. Rotasi & skala dilakukan dengan **gestur dua jari** (bukan tombol +/−); pemindahan
+   dengan drag satu jari.
+5. Teks UI template berbahasa **Inggris** (bawaan Unity), tidak diterjemahkan.
+6. **Belum ada bayangan pantulan (AR shadow receiver)** — visualisasi permukaan memakai
+   *feathered plane* bawaan template.
+7. Build iOS belum dikonfigurasi (hanya Android yang disiapkan), meskipun ARKit terpasang.
+8. APK ditandatangani debug keystore — untuk distribusi perlu keystore rilis.
+9. Jika perangkat tidak mendukung ARCore, APK dengan *requirement = Required* tidak
+   dapat dipasang dari Play Store/perangkat non-ARCore.
+10. **Pengujian terbatas**: aplikasi terpasang dan berjalan di Samsung Galaxy A54
+    (sesi AR aktif, UI template tampil), tetapi tabel 5 skenario pengujian dan
+    checklist screenshot/video belum diisi penuh.
 
 ---
 
@@ -258,14 +260,12 @@ Checklist bukti visual (screenshot & video 1–2 menit):
 
 | Kondisi | Perilaku aplikasi |
 |---|---|
-| Perangkat tidak mendukung ARCore | Pesan “Perangkat ini tidak mendukung ARCore…” |
-| Izin kamera ditolak | Pesan instruksi membuka Pengaturan aplikasi |
-| Izin kamera sedang diminta | Pesan “Menunggu izin kamera…” |
-| Belum ada permukaan | “Arahkan kamera ke lantai atau meja, lalu gerakkan perlahan.” |
-| Tracking terganggu / alasan | “Tracking terganggu (&lt;alasan&gt;). Arahkan kamera ke permukaan bertekstur…” |
-| Tap tanpa hasil raycast | Toast “Tidak ada permukaan pada titik tersebut.” |
-| Prefab objek tidak ada | Log error + kubus cadangan dibuat runtime |
-| ARPlaneManager / ARRaycastManager tidak ada | Log error pada Awake |
+| Belum ada permukaan | Coaching prompt template: *Scan Surfaces* / *Tap to Place* |
+| Izin kamera | Diminta otomatis oleh AR Foundation saat sesi dimulai |
+| Tracking terganggu | Template menampilkan status melalui `ARDebugMenu`/coaching UI |
+| Objek dihapus | Tombol `Delete` / `Remove Objects` pada menu opsi |
+| Visualisasi permukaan | `Debug Plane Toggle` pada menu opsi |
+| (Versi awal) Pesan status, toast, dan deteksi perangkat non-ARCore | Tersedia pada skrip `ARPlaneController`/`ARUIController`, **tidak aktif** di scene final |
 
 ---
 
