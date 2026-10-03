@@ -1,0 +1,41 @@
+# Unity generated (jangan di-commit)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Uu]serSettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+.utmp/
+
+# Hasil build sampingan (tetap simpan APK utama)
+/[Bb]uilds/*_BackUpThisFolder*
+/[Bb]uilds/*_BurstDebugInformation*
+
+# IDE / generator project
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Crash / analytics
+crashlytics-build.properties
+sysinfo.txt
+
+# APK build utama tetap ikut (deliverable)
+!/[Bb]uilds/SimpleARPlacement.apk
