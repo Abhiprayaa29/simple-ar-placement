@@ -3,9 +3,9 @@
 Aplikasi Augmented Reality (AR) sederhana berbasis **Unity** + **AR Foundation** + **ARCore**
 untuk perangkat Android. Aplikasi mendeteksi permukaan (lantai/meja), menampilkan
 visualisasi grid permukaan, dan memungkinkan pengguna **menempatkan objek 3D (kursi)**
-dengan mengetuk layar, lalu memindahkan, merotasi, mengubah skala, atau mereset objek.
+dengan mengetuk layar, lalu memindahkan, merotasi, mengubah skala, atau mereset objek
 
-Dokumen ini berbahasa Indonesia dan menjelaskan seluruh langkah dari membuka proyek
+Dokumen ini berbahasa Indonesia dan menjelaskan seluruh langkah dari membuka proyek,
 sampai menghasilkan APK.
 
 ---
